@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParametrizedLocator – Maciej Socha</title>
+<meta name="description" content="ParametrizedLocator: biblioteka Java do parametryzowania lokatorów w Page Objectach Selenium.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">Maciej Socha</a>
+<nav>
+<a href="index.html">O mnie</a>
+<a href="parametrized-locator.html" aria-current="page">ParametrizedLocator</a>
+<a href="automation-demo.html">Strona testowa</a>
+</nav>
+</div></header>
+<main class="wrap">
+<h1>ParametrizedLocator</h1>
+<p class="lead">Biblioteka Java do parametryzowania lokatorów w Page Objectach Selenium.</p>
+
+<h2>Problem</h2>
+<p>Lokator w Page Objecie to zwykły napis. Gdy kilka elementów różni się tylko etykietą, językiem interfejsu albo identyfikatorem wiersza, zostają dwie drogi: kopiowanie lokatorów albo pisanie metod pomocniczych, które składają XPath z kawałków tekstu. Obie szybko robią bałagan.</p>
+
+<h2>Jak to działa</h2>
+<ul>
+<li>Lokator definiujesz adnotacją <code>@FindByParameterized</code>, a w jego treści umieszczasz placeholdery w formacie <code>{wec:nazwa.parametru}</code>.</li>
+<li>Wartości dostarcza implementacja <code>IParameterProvider</code>. Domyślna, <code>DefaultParameterProvider</code>, jest bezpieczna wątkowo, więc nadaje się do testów uruchamianych równolegle.</li>
+<li>Biblioteka działa z <code>PageFactory</code>. W jednej klasie możesz łączyć lokatory parametryzowane ze zwykłym <code>@FindBy</code>.</li>
+<li>Własnego providera przekazujesz jako wartość adnotacji.</li>
+<li>Stronę możesz zbudować na <code>WebDriver</code> albo na <code>WebElement</code>.</li>
+</ul>
+
+<h2>Instalacja</h2>
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;click.webelement&lt;/groupId&gt;
+  &lt;artifactId&gt;parameterized-findby&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+<h2>Przykład</h2>
+<p>Test aplikacji wielojęzycznej: ten sam przycisk, inna etykieta w każdym języku. Przykład działa na <a href="automation-demo.html">stronie testowej</a>. Importy pominięto.</p>
+<pre><code>public class LoginPage extends PageObjectParameterized {
+
+    @FindByParameterized(xpath = "//button[text()='{wec:btn.text}']")
+    WebElement submit;
+
+    @FindBy(id = "username")
+    WebElement username;
+
+    public LoginPage(SearchContext searchContext) {
+        super(searchContext);
+    }
+}</code></pre>
+<pre><code>@DataProvider(name = "languages")
+Object[][] languages() {
+    return new Object[][]{ {"pl", "Zaloguj"}, {"en", "Sign in"} };
+}
+
+@Test(dataProvider = "languages")
+void loginButtonIsAvailable(String lang, String buttonText) {
+    driver.get("https://maciejsocha.github.io/automation-demo.html");
+    driver.findElement(By.id("lang-" + lang)).click();
+
+    DefaultParameterProvider.properties.set(Map.of("btn.text", buttonText));
+    LoginPage page = new LoginPage(driver);
+    page.submit.click();
+}</code></pre>
+<p>Parametry ustawiasz przed utworzeniem strony. Page Object czyta je w momencie inicjalizacji.</p>
+
+<h2>Kod źródłowy</h2>
+<p>Repozytorium z pełnym opisem: <a href="https://github.com/webelement-click/parameterized-findby">github.com/webelement-click/parameterized-findby</a>.</p>
+</main>
+<footer><div class="wrap">© 2026 Maciej Socha</div></footer>
+</body>
+</html>
